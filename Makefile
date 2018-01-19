@@ -15,7 +15,7 @@ docker_run:
 docker_run_shell:
 	docker run --net=host --entrypoint=${SHELL} -ti ${DOCKER_IMAGE}:${VERSION}
 
-docker_upload_image:
+docker_upload: docker_build
 	docker push ${DOCKER_IMAGE}:${VERSION}
 
 .PHONY: docker_build
