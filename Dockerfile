@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3-slim
 
 ADD requirements.txt tmp/requirements.txt
 ADD server service
