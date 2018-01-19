@@ -3,8 +3,8 @@ from setuptools import setup
 setup(
     name='purifier2prometheus',
     version='0.0.2',
-    packages=[''],
-    url='',
+    packages=['server'],
+    url='https://github.com/harnash/mistats',
     license='MIT',
     author='Łukasz Harasimowicz',
     author_email='developer@harnash.eu',
