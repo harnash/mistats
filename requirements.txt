@@ -1,3 +1,3 @@
--e git+https://github.com/rytilahti/python-miio.git@52bc251b14c472092c465270c091306e0e087e6c#egg=python-miio
+-e git+https://github.com/harnash/python-miio.git@ea3c25fad5a433d6af2076260c53078d0e50963d#egg=python-miio
 prometheus_client
 structlog[dev]
