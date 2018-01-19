@@ -29,7 +29,7 @@ def fetch_aqi(addr: str, device: 'miio.Device'):
 
     labels = [addr, info.model]
 
-    if device.__class__ == AirPurifier.__class__:
+    if isinstance(device, AirPurifier):
         status = device.status()
         logger.debug('status received', **status.data)
         stats.air_purifier.process(status, labels)
