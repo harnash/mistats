@@ -1,10 +1,20 @@
-VERSION := 0.0.2
 BUILD_TIME := `date +%FT%T%z`
 
-SERVICE_NAME := purifier2prometheus
+SERVICE_NAME := mistats
 DOCKER_IMAGE := service.harnash.com:5000/services/$(SERVICE_NAME)
 DOCKER_PORT := 80
 SHELL := /bin/sh
+
+# Injecting project version and build time
+ifeq ($(OS),Windows_NT)
+	VERSION := $(shell cmd /C 'git describe --always --tags --abbrev=7')
+else
+	VERSION := $(shell sh -c 'git describe --always --tags --abbrev=7')
+endif
+
+ifeq ($(VERSION),)
+	VERSION = "0.0.2"
+endif
 
 docker_build:
 	docker build -t ${DOCKER_IMAGE}:${VERSION} ./
