@@ -1,4 +1,4 @@
-VERSION := 0.0.0
+VERSION := 0.0.1
 BUILD_TIME := `date +%FT%T%z`
 
 SERVICE_NAME := purifier2prometheus
