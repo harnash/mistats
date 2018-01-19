@@ -9,10 +9,11 @@ from config import SERVER_PORT, LOG_MODE, DEBUG_MODE
 
 PURIFIER_AQI = Gauge('aqi', 'Air Quality Index')
 
+logger = Logger('server')
 
 def fetch_aqi(client: 'miio.Device'):
     status = client.status()
-    Logger('app').debug('status received', **status.data)
+    logger.debug('status received', **status.data)
     PURIFIER_AQI.set(status.aqi)
 
 

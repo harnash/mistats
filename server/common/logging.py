@@ -193,7 +193,7 @@ def initialize_logging(mode: str, debug: bool = False) -> None:
             },
         },
         "loggers":                  {
-            "": {
+            "server": {
                 "handlers":  ["default"],
                 "level":     level,
                 "propagate": True,
