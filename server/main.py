@@ -1,8 +1,11 @@
 import time
 import os
+
+from miio import DeviceException
 from prometheus_client import start_http_server, Gauge
 from miio.airpurifier import AirPurifier
 from common.logging import Logger, initialize_logging
+from structlog.processors import format_exc_info
 
 # Create a metric to track time spent and requests made.
 from config import SERVER_PORT, LOG_MODE, DEBUG_MODE
@@ -28,8 +31,16 @@ logger = Logger('server')
 
 
 def fetch_aqi(client: 'miio.Device'):
-    status = client.status()
-    info = client.info()
+    try:
+        status = client.status()
+        info = client.info()
+    except DeviceException:
+        format_exc_info(logger, None, {'exc_info': True})
+        return
+    except OSError:
+        format_exc_info(logger, None, {'exc_info': True})
+        return
+
     labels = [client.ip, info.model]
     logger.debug('status received', **status.data)
     PURIFIER_AQI.labels(*labels).set(status.aqi)
