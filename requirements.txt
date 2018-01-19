@@ -1,0 +1,2 @@
+-e git+https://github.com/rytilahti/python-miio.git@52bc251b14c472092c465270c091306e0e087e6c#egg=python-miio
+prometheus_client
