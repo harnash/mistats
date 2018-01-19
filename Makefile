@@ -14,7 +14,7 @@ else
 endif
 
 ifeq ($(VERSION),)
-	VERSION = 0.1.2
+	VERSION = 0.1.3
 endif
 
 docker_build:
