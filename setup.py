@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='purifier2prometheus',
-    version='0.1.5',
+    version='0.2.0',
     packages=['server'],
     url='https://github.com/harnash/mistats',
     license='MIT',
