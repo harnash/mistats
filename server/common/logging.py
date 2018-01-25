@@ -63,9 +63,8 @@ import datetime
 import logging
 import logging.config
 import platform
-import sys
 import threading
-from typing import Optional, Any
+from pythonjsonlogger import jsonlogger
 
 import structlog
 from .version import VersionInfo
@@ -94,6 +93,12 @@ class LogEntryProcessor:
         return event_dict
 
     @staticmethod
+    def move_event_to_message(_, __, event_dict: dict) -> dict:
+        event_dict['message'] = event_dict['event']
+        del event_dict['event']
+        return event_dict
+
+    @staticmethod
     def add_logger_name(logger, _, event_dict: dict) -> dict:
         """
         Add the logger name to the event dict - using loggerName consistent
@@ -105,20 +110,6 @@ class LogEntryProcessor:
             event_dict["loggerName"] = logger.name
         else:
             event_dict["loggerName"] = record.name
-        return event_dict
-
-    @staticmethod
-    def add_timestamp(_, __, event_dict: dict) -> dict:
-        """
-        Add timestamp to the event dict - using an Analyitics appropriate time stamp
-
-        CLC Analytics requires timestamps to be of form: YYYY-MM-DDTHH:MM:SS.sssZ
-        python 3.5 strftime does not have millis; strftime is implemented on by the
-        C library on the target OS - trying for something that is portable
-        """
-        now = datetime.datetime.utcnow()
-        millis = '{:3d}'.format(int(now.microsecond / 1000))
-        event_dict["timestamp"] = "%s.%sZ" % (now.strftime('%Y-%m-%dT%H:%M:%S'), millis)
         return event_dict
 
 
@@ -136,72 +127,65 @@ def initialize_logging(mode: str, debug: bool = False) -> None:
       clutter for local development.
     """
 
-    if mode == 'LOCAL':
-        chain = [
-            LogEntryProcessor.add_app_info,
-            structlog.stdlib.add_log_level,
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.PositionalArgumentsFormatter(),
-            structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S.%f"),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.dev.ConsoleRenderer(),
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-        ]
-    else:
-        chain = [
-            LogEntryProcessor.add_app_info,
-            LogEntryProcessor.add_logger_name,
-            LogEntryProcessor.add_timestamp,
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.processors.JSONRenderer(),
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-        ]
-
+    timestamper = structlog.processors.TimeStamper(fmt="iso", utc=True)
     pre_chain = [
         LogEntryProcessor.add_app_info,
+        LogEntryProcessor.add_logger_name,
         structlog.stdlib.add_log_level,
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="%Y-%m-%d %H:%M:%S.%f"),
+        timestamper,
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
     ]
+    if mode.lower() == 'console':
+        chain = [
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.dev.ConsoleRenderer(),
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ]
+        handlers = ['console']
+    else:
+        chain = pre_chain + [
+            LogEntryProcessor.move_event_to_message,
+            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        ]
+        handlers = ['json']
 
     level = 'DEBUG' if debug else 'INFO'
+
     logging.config.dictConfig({
         "version":                  1,
         "disable_existing_loggers": False,
         "formatters":               {
-            "plain":   {
-                "()":                structlog.stdlib.ProcessorFormatter,
-                "processor":         structlog.dev.ConsoleRenderer(colors=False),
-                "foreign_pre_chain": pre_chain,
+            "json":   {
+                "()":                jsonlogger.JsonFormatter,
             },
-            "colored": {
+            "console": {
                 "()":                structlog.stdlib.ProcessorFormatter,
                 "processor":         structlog.dev.ConsoleRenderer(colors=True),
                 "foreign_pre_chain": pre_chain,
             },
         },
         "handlers":                 {
-            "default": {
+            "console": {
                 "level":     level,
                 "class":     "logging.StreamHandler",
-                "formatter": "colored",
+                "formatter": "console",
+            },
+            "json":    {
+                "level":     level,
+                "class":     "logging.StreamHandler",
+                "formatter": "json",
             },
         },
         "loggers":                  {
             "": {
-                "handlers":  ["default"],
+                "handlers":  handlers,
                 "level":     level,
                 "propagate": True,
             },
         }
     })
-
-    structlog.configure_once(
+    structlog.configure(
         processors=chain,
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
