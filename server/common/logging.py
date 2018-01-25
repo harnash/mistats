@@ -1,65 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Borrowed from: https://github.com/stevetarver/ember-falcon-mongo
-
-Logger and LoggerMixin should be the only access to the logging system for
-service code.
-
-These classes do several things required by Analytics ELK stack:
-    * provide the right flavor of ISO8601 timestamp
-    * provide source coordinates: app name, version, hostname
-    * remap default log record keys to match existing platform logging conventions
-    * censors passwords
-    * ensures well-formed json: k-v pairs, newlines escaped, etc.
-
-Note: malformed log records will be dropped during ingestion
-
-The Logger class provides the same interface as the stdlib logging package.
-The LoggerMixin class exposes this interface with '_' prefixes to indicate
-a protected member.
-
-You can run the logging package in 'local' mode that prints human readable,
-colored logs, and 'pd' mode that prints json lines for forwarding to ELK.
-To run in local dev mode::
-
-    LOG_MODE=LOCAL ./run_api
-
-FORMATTING:
-    Your log message should be the first argument using "".format()::
-
-        self._info('Health server listening at: {}'.format(self._server.url))
-
-    If you use the old method of formatting log messages::
-
-        self._info('Health server listening at: %s', self._server.url)
-
-    the additional parameters will show under key positional_args instead of being
-    inserted into the log message. Sometimes these args are just dropped - depending
-    on configuration.
-
-    You can add key-value pairs to a log record::
-
-        self._info("Stopping health server...", foo="bar", baz="wombat")
-
-    For exceptions, you can get the exception name with::
-
-        type(exc).__name__
-
-    If you provide the exception as an additional k-v pair named exc_info, a traceback
-    will be added to the log record.
-
-    Putting this all together, you can show the exception type, msg, and traceback
-    with something like::
-
-        self._error("During shutdown, worker raised {}: {}".format(type(exc).__name__, exc),
-                    exc_info=exc)
-
-NOTES:
-    * When testing new log entries, ensure that you view log output with and
-      without LOG_MODE=LOCAL - they are not perfectly aligned - one may
-      cause an error where the other does not.
-"""
-import datetime
 import logging
 import logging.config
 import platform
@@ -75,10 +13,8 @@ class LogEntryProcessor:
     Provide log entry processors as well as cached values that are expensive
     to create and thread local storage for request level variables.
     """
-    # TODO: need some way to get a pod/node identifier instead of host - or perhaps that will work
     _HOST = platform.node().split('.')[0]
     _VI = VersionInfo()
-    _TLS = threading.local()
 
     @staticmethod
     def add_app_info(_, __, event_dict: dict) -> dict:
@@ -98,21 +34,6 @@ class LogEntryProcessor:
         del event_dict['event']
         return event_dict
 
-    @staticmethod
-    def add_logger_name(logger, _, event_dict: dict) -> dict:
-        """
-        Add the logger name to the event dict - using loggerName consistent
-        with existing platform logging.
-        """
-        # TODO: is this still needed - why do we need a loggerName if we include class
-        record = event_dict.get("_record")
-        if record is None:
-            event_dict["loggerName"] = logger.name
-        else:
-            event_dict["loggerName"] = record.name
-        return event_dict
-
-
 def initialize_logging(mode: str, debug: bool = False) -> None:
     """
     Initialize our logging system:
@@ -130,7 +51,7 @@ def initialize_logging(mode: str, debug: bool = False) -> None:
     timestamper = structlog.processors.TimeStamper(fmt="iso", utc=True)
     pre_chain = [
         LogEntryProcessor.add_app_info,
-        LogEntryProcessor.add_logger_name,
+        structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         timestamper,
         structlog.processors.StackInfoRenderer(),

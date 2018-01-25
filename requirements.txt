@@ -1,3 +1,5 @@
 -e git+https://github.com/harnash/python-miio.git@ea3c25fad5a433d6af2076260c53078d0e50963d#egg=python-miio
 prometheus_client
 structlog[dev]
+zeroconf
+hug
