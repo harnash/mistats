@@ -10,5 +10,5 @@ setup(
     author_email='developer@harnash.eu',
     description='',
     python_requires='>=3.4',
-    install_requires=['python-miio', 'prometheus_client', 'structlog[dev]', 'zeroconf', 'hug'],
+    install_requires=['python-miio', 'prometheus_client', 'structlog[dev]', 'zeroconf', 'hug', 'sqlalchemy'],
 )
