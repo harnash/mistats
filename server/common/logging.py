@@ -54,12 +54,14 @@ def initialize_logging(mode: str, debug: bool = False) -> None:
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         timestamper,
-        structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
+        structlog.processors.StackInfoRenderer(),
     ]
     if mode.lower() == 'console':
         chain = [
             structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.format_exc_info,
+            structlog.processors.StackInfoRenderer(),
             structlog.dev.ConsoleRenderer(),
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ]

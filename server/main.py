@@ -2,37 +2,42 @@ import zeroconf
 import hug
 from miio.discovery import Listener
 from prometheus_client import REGISTRY
-from prometheus_client.exposition import generate_latest
 
-from common.logging import initialize_logging
-from middleware.accesslog import AccessLogMiddleware
+from common.logging import initialize_logging, Logger
+from middleware.accesslog import setup_access_log
 from stats.collector import MiioDeviceCollector
 
-# Create a metric to track time spent and requests made.
-from config import db, config
-
-app = hug.API(__name__)
-
-# init DB
-db.init_app(app, config.SQLALCHEMY_DATABASE_URI)
+from config import DB, CONFIG
+import routers
 
 
 service_browser = None
+app = hug.API(__name__)
+
+router = hug.route.API(app)
+router.get('/stats', output=hug.output_format.text, api=app)(routers.generate_stats)
+
+router.get('/device', api=app)(routers.list_devices)
+
+initialize_logging(CONFIG.LOG_MODE, debug=CONFIG.DEBUG_MODE)
+setup_access_log(app, Logger('access_log'))
+DB.init_app(app, CONFIG.SQLALCHEMY_DATABASE_URI)
+DB.create_models()
 
 
-@hug.startup()
+@hug.exception(api=app)
+def handle_exception(exception):
+    log = Logger('mistats')
+    log.error("exception occurred", exc_info=exception, stack_info=True)
+    raise hug.HTTPInternalServerError('Something broke', 'Something broke')
+
+
+@hug.startup(api=app)
 def init(api: hug.API):
     global service_browser
-    initialize_logging(config.LOG_MODE, debug=config.DEBUG_MODE)
     listener = Listener()
-    device_collector = MiioDeviceCollector(listener, config.METRIC_PREFIX)
+    device_collector = MiioDeviceCollector(listener, CONFIG.METRIC_PREFIX)
     service_browser = zeroconf.ServiceBrowser(
         zeroconf.Zeroconf(), "_miio._udp.local.", listener)
 
     REGISTRY.register(device_collector)
-    api.http.add_middleware(AccessLogMiddleware())
-
-
-@hug.get(output=hug.output_format.text)
-def stats():
-    return generate_latest(REGISTRY).decode('utf8')

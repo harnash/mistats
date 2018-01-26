@@ -2,6 +2,8 @@ import hug
 
 from sqlalchemy import create_engine, orm
 
+from models import Base
+
 
 class SQLAlchemy:
     def __init__(self, autocommit=False):
@@ -20,6 +22,9 @@ class SQLAlchemy:
         self.session.flush()
         self.session.close()
         self.session.remove()
+
+    def create_models(self):
+        Base.metadata.create_all(self.engine)
 
     def init_app(self, app, conn_str):
         self._conn_str = conn_str
