@@ -4,6 +4,7 @@ import miio.discovery
 
 from models import Base
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP
+from sqlalchemy.orm import Session
 
 
 class Device(Base):
@@ -11,13 +12,17 @@ class Device(Base):
 
     id = Column(Integer(), primary_key=True)
     type = Column(String(length=255), nullable=False)
-    address = Column(String(length=255), nullable=False)
+    address = Column(String(length=255), nullable=False, unique=True)
     identifier = Column(String(length=255), nullable=False)
     token = Column(String(length=255), nullable=False)
     enabled = Column(Boolean(), default=True)
     last_seen = Column(TIMESTAMP(), nullable=False, default=datetime.utcnow)
     updated = Column(TIMESTAMP(), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     added = Column(TIMESTAMP(), nullable=False, default=datetime.utcnow)
+
+    @staticmethod
+    def check_if_exists(db: Session, item: 'Device') -> bool:
+        return db.query(Device).filter(Device.address == item.address).scalar() is not None
 
     @staticmethod
     def new_from_device_info(identifier: str, device_info: miio.discovery.Device) -> 'Device':
