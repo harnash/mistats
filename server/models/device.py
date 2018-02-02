@@ -1,3 +1,4 @@
+import codecs
 from datetime import datetime
 import miio.discovery
 
@@ -21,8 +22,8 @@ class Device(Base):
     @staticmethod
     def new_from_device_info(identifier: str, device_info: miio.discovery.Device) -> 'Device':
         return Device(
-            type=device_info.__name__,
+            type=device_info.__class__.__name__,
             address='{}:{}'.format(device_info.ip, device_info.port),
             identifier=identifier,
-            token=device_info.token
+            token=codecs.encode(device_info.token, 'hex')
         )

@@ -1,9 +1,9 @@
-from discovery.miio import MiioServiceDiscovery, Listener
+from discovery.miio import MiioServiceDiscovery, MiioListener
 
 
 def initialize_service_discovery() -> MiioServiceDiscovery:
     global ServiceDiscovery
-    ServiceDiscovery = MiioServiceDiscovery(Listener())
+    ServiceDiscovery = MiioServiceDiscovery(MiioListener())
     return ServiceDiscovery
 
 
