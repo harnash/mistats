@@ -45,4 +45,4 @@ def handle_exception(exception):
 
 @hug.startup(api=app)
 def init(_):
-    REGISTRY.register(initialize_collector(ServiceDiscovery.listener, CONFIG.METRIC_PREFIX))
+    REGISTRY.register(initialize_collector(DB, CONFIG.METRIC_PREFIX))

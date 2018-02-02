@@ -1,23 +1,41 @@
-from miio.discovery import Listener
 from inspect import getmembers
 from prometheus_client.core import GaugeMetricFamily
 from enum import Enum
+from miio.discovery import create_device
+
+from db import SQLAlchemy
+from models import Device
 
 
 class MiioDeviceCollector(object):
     labels = ['host', 'model']
 
-    def __init__(self, listener: Listener, prefix: str):
-        self.__listener = listener
+    def __init__(self, db: SQLAlchemy, prefix: str):
         self.__prefix = prefix
+        self.__db = db
+
+    @staticmethod
+    def get_class(module, kls):
+        m = __import__(module)
+        for comp in kls.split('.'):
+            m = getattr(m, comp)
+        return m
 
     def collect(self):
         result = []
 
-        for addr, device in self.__listener.found_devices.items():
-            status_method = getattr(device, "status", None)
-            info = device.info()
-            label_values = [addr, info.model]
+        self.__db.connect()
+        objs = self.__db.session.query(Device).filter(Device.enabled == True).all()
+        self.__db.close()
+
+        for device in objs:
+            info_class = self.get_class('miio', device.type)
+            if info_class is None:
+                continue
+            ip, _ = device.address.split(':', 1)
+            dev_info = create_device(ip, info_class)
+            status_method = getattr(dev_info, "status", None)
+            label_values = [device.address, device.type]
             if callable(status_method):
                 status = status_method()
 
@@ -37,7 +55,11 @@ class MiioDeviceCollector(object):
                     except ValueError:
                         continue
 
-                    gauge = GaugeMetricFamily(self.__prefix + '_' + name.lower(), value.__doc__, labels=self.labels)
+                    if value.__doc__ is not None:
+                        doc = value.__doc__
+                    else:
+                        doc = ''
+                    gauge = GaugeMetricFamily(self.__prefix + '_' + name.lower(), doc, labels=self.labels)
 
                     gauge.add_metric(label_values, metric_value)
                     result.append(gauge)
