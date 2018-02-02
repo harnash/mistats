@@ -1,3 +1,4 @@
+import codecs
 import time
 from models import Device
 from config import DB
@@ -18,15 +19,15 @@ def discover():
     for name, info in ServiceDiscovery.listener.found_devices.items():
         devices = DB.session.query(Device).filter(Device.address == '{}:{}'.format(info.ip, info.port)).all()
 
-        if devices.count() == 0:
+        if len(devices) == 0:
             new_device = Device.new_from_device_info(name, info)
             DB.session.add(new_device)
 
         for dev in devices:
-            if dev.token == info.token:
+            new_token = codecs.encode(info.token, 'hex')
+            if dev.token == new_token:
                 dev.last_seen = datetime.utcnow()
-                DB.session.update(dev)
             else:
                 DB.session.delete(dev)
 
-    list_devices()
+    return list_devices()
