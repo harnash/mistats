@@ -15,7 +15,7 @@ import routers
 app = hug.API(__name__)
 
 router = hug.route.API(app)
-router.get('/stats', output=hug.output_format.text, api=app)(routers.generate_stats)
+router.get('/metrics', output=hug.output_format.text, api=app)(routers.generate_stats)
 
 router.get('/devices', api=app)(routers.list_devices)
 router.post('/devices/discover', api=app)(routers.do_discovery)
