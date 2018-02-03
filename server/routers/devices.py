@@ -1,13 +1,24 @@
 import codecs
 import time
+import hug
 from models import Device
 from config import DB
 from discovery import ServiceDiscovery
 from datetime import datetime
+from falcon import HTTP_404
 
 
 def list_devices():
     return DB.session.query(Device).all()
+
+
+def activate(device_id: int, response: hug.Response):
+    item = DB.session.query(Device).filter(Device.id == device_id).first()
+    if item is None:
+        response.status = HTTP_404
+        return "Given id not found"
+    item.enabled = True
+    return item
 
 
 def discover():
