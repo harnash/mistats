@@ -4,7 +4,7 @@ from miio import Device
 from miio.discovery import Listener
 import zeroconf
 from models import Device as DBDevice
-from config import DB
+from sqlalchemy.orm import sessionmaker
 
 
 class MiioListener(Listener):
@@ -14,10 +14,10 @@ class MiioListener(Listener):
         if device_info is not None:
             dev = DBDevice.new_from_device_info(info.name, device_info)
             dev.enabled = False
-            DB.connect()
-            if not DBDevice.check_if_exists(DB.session, dev):
-                DB.session.add(dev)
-            DB.close()
+            session = sessionmaker()
+            if not DBDevice.check_if_exists(session, dev):
+                session.add(dev)
+            session.close_all()
 
         return device_info
 

@@ -1,5 +1,13 @@
 import os
-from db import SQLAlchemy
+from models import Base
+
+
+settings = {
+    "DATABASE": {
+        "URL": os.environ['SQLALCHEMY_DATABASE_URI'],
+        "METADATA": Base.metadata
+    }
+}
 
 
 # Declare your config classes with settings variables here
@@ -7,7 +15,6 @@ class Config:
     APP_DIR = os.path.abspath(os.path.dirname(__file__))
     PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, os.pardir))
     SECRET_KEY = os.environ['SECRET_KEY']
-    SQLALCHEMY_DATABASE_URI = os.environ['SQLALCHEMY_DATABASE_URI']
     LOG_MODE = os.getenv('LOG_MODE', 'JSON')
     DEBUG_MODE = bool(os.getenv('DEBUG', 0))
     METRIC_PREFIX = os.getenv('METRIC_PREFIX', 'mistats')
@@ -27,5 +34,4 @@ ENV_MAPPING = {
 }
 
 # Globals. If you like move it to separate module
-DB = SQLAlchemy(autocommit=True)
 CONFIG = ENV_MAPPING[os.environ.get('API_ENV', 'DEVELOPMENT')]

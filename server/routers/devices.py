@@ -2,18 +2,21 @@ import codecs
 import time
 import hug
 from models import Device
-from config import DB
+from sqlalchemy.orm import Session
 from discovery import ServiceDiscovery
 from datetime import datetime
-from falcon import HTTP_404
+from apistar import Route
+import typing
+
+from models.base import sql_alchemy_to_json
 
 
-def list_devices():
-    return DB.session.query(Device).all()
+def list_devices(session: Session) -> typing.List[Device]:
+    return [sql_alchemy_to_json(item) for item in session.query(Device).all()]
 
 
-def activate(device_id: int, response: hug.Response):
-    item = DB.session.query(Device).filter(Device.id == device_id).first()
+def activate(session: Session, device_id: int, response: hug.Response):
+    item = session.query(Device).filter(Device.id == device_id).first()
     if item is None:
         response.status = HTTP_404
         return "Given id not found"
@@ -42,3 +45,8 @@ def discover():
                 DB.session.delete(dev)
 
     return list_devices()
+
+
+device_routes = [
+    Route('/', 'GET', list_devices)
+]
