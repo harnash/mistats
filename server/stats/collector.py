@@ -8,7 +8,7 @@ from models import Device
 
 
 class MiioDeviceCollector(object):
-    labels = ['host', 'model']
+    labels = ['host', 'model', 'identifier']
 
     def __init__(self, db: SQLAlchemy, prefix: str):
         self.__prefix = prefix
@@ -35,7 +35,7 @@ class MiioDeviceCollector(object):
             ip, _ = device.address.split(':', 1)
             dev_info = create_device(ip, info_class)
             status_method = getattr(dev_info, "status", None)
-            label_values = [device.address, device.type]
+            label_values = [device.address, device.type, device.identifier]
             if callable(status_method):
                 status = status_method()
 
