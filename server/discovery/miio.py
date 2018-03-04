@@ -15,8 +15,13 @@ class MiioListener(Listener):
             dev = DBDevice.new_from_device_info(info.name, device_info)
             dev.enabled = True
             DB.connect()
-            if not DBDevice.check_if_exists(DB.session, dev):
+            
+            db_dev = DBDevice.find(DB.session, dev)
+            if db_dev is None:
                 DB.session.add(dev)
+            elif db_dev.address != dev.address:
+                db_dev.address = dev.address
+
             DB.close()
 
         return device_info
