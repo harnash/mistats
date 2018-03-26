@@ -18,7 +18,7 @@ router = hug.route.API(app)
 router.get('/metrics', output=hug.output_format.text, api=app)(routers.generate_stats)
 
 router.get('/devices', api=app)(routers.list_devices)
-router.post('/devices/activate/{device_id}', api=app)(routers.acitvate_device)
+router.post('/devices/{device_id}/activate', api=app)(routers.acitvate_device)
 router.post('/devices/discover', api=app)(routers.do_discovery)
 
 initialize_logging(CONFIG.LOG_MODE, debug=CONFIG.DEBUG_MODE)

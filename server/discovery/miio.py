@@ -16,7 +16,7 @@ class MiioListener(Listener):
             dev.enabled = True
             DB.connect()
             
-            db_dev = DBDevice.find(DB.session, dev)
+            db_dev = DBDevice.find(DB.session, dev.identifier)
             if db_dev is None:
                 DB.session.add(dev)
             elif db_dev.address != dev.address:
