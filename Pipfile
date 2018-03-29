@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+python-miio = "*"
+prometheus-client = "*"
+structlog = {extras = ["dev"]}
+zeroconf = "*"
+hug = "*"
+sqlalchemy = "*"
+python-json-logger = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.6"
