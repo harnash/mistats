@@ -8,7 +8,7 @@ python-miio = "*"
 prometheus-client = "*"
 structlog = {extras = ["dev"]}
 zeroconf = "*"
-hug = "*"
+hug = "2.3.0"
 sqlalchemy = "*"
 python-json-logger = "*"
 

@@ -1,7 +1,0 @@
-python-miio
-prometheus_client
-structlog[dev]
-zeroconf
-hug
-sqlalchemy
-python-json-logger
